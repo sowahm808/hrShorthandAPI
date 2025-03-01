@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Survey;
 use App\Models\Response;
+use App\Models\Employee;
+use App\Models\Question;
+
 use App\Notifications\NegativeResponseAlert;
 use Illuminate\Support\Facades\Notification;
 
@@ -13,42 +16,54 @@ class SurveyController extends Controller
     public function index()
     {
         // Return static questions for simplicity.
-        $questions = [
-            "How aware are you of the company vision?",
-            "Do you view your skills as an asset to the company?",
-            "How clear are your job expectations?",
-            "How would you rate coworker support and collaboration?",
-            "Are necessary resources available for your tasks?",
-            "Overall job satisfaction and would you recommend this job?",
-            "Do you see long-term commitment here? Suggestions for improvement?"
-        ];
+        // $questions = [
+        //     "How aware are you of the company vision?",
+        //     "Do you view your skills as an asset to the company?",
+        //     "How clear are your job expectations?",
+        //     "How would you rate coworker support and collaboration?",
+        //     "Are necessary resources available for your tasks?",
+        //     "Overall job satisfaction and would you recommend this job?",
+        //     "Do you see long-term commitment here? Suggestions for improvement?"
+        // ];
+
+        // $questions = Question::orderBy('order')->get();
+        $questions = Question::orderBy('order')->pluck('text'); // Returns only text values
+
         return response()->json($questions);
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'employee_id' => 'required|integer',
+            'employee_id' => 'required|integer|exists:employees,id', // Ensure employee exists
             'responses'   => 'required|array',
             'survey_date' => 'required|date'
         ]);
 
-        // Save survey record.
+        // Fetch the employee to confirm it exists
+        $employee = Employee::find($data['employee_id']);
+        if (!$employee) {
+            return response()->json(['message' => 'Employee not found'], 404);
+        }
+
+        // Create survey record
         $survey = Survey::create([
-            'employee_id' => $data['employee_id'],
+            'employee_id' => $employee->id,
             'survey_date' => $data['survey_date']
         ]);
 
-        // Save each response.
+        // Save each response (ignore empty responses)
         foreach ($data['responses'] as $questionId => $answer) {
-            Response::create([
-                'survey_id'   => $survey->id,
-                'question_id' => $questionId,
-                'answer'      => $answer,
-            ]);
+            if (!empty($answer)) { // Ignore empty responses
+                Response::create([
+                    'survey_id'   => $survey->id,
+                    'question_id' => $questionId,
+                    'answer'      => $answer,
+                ]);
+            }
         }
 
-        // Trigger alerts if responses are below a threshold.
+        // Trigger alerts if responses are below a threshold
         if ($this->shouldAlert($data['responses'])) {
             Notification::route('mail', 'manager@company.com')
                 ->notify(new NegativeResponseAlert($survey));
@@ -61,7 +76,7 @@ class SurveyController extends Controller
     {
         // Example: Trigger alert if any answer is below 3 (on a 1-5 scale)
         foreach ($responses as $answer) {
-            if ($answer < 3) {
+            if (is_numeric($answer) && $answer < 3) {
                 return true;
             }
         }

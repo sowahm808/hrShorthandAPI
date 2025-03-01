@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable; // If using authentication
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class Employee extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     // Fillable properties for mass assignment
     protected $fillable = [
@@ -22,6 +23,17 @@ class Employee extends Authenticatable
         'password',
         'remember_token',
     ];
+
+    // Automatically cast attributes
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+    ];
+
+    // Automatically hash password when setting it
+    public function setPasswordAttribute($value)
+    {
+        $this->attributes['password'] = bcrypt($value);
+    }
 
     // Relationships
 

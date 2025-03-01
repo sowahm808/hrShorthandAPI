@@ -4,19 +4,19 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-
-class CreateResponsesTable extends Migration
-{
+return new class extends Migration {
     public function up()
     {
         Schema::create('responses', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('survey_id');
-            $table->integer('question_id'); // if questions are indexed
+            $table->foreignId('survey_id')
+                  ->constrained('surveys')
+                  ->onDelete('cascade');
+            $table->foreignId('question_id')
+                  ->constrained('questions')
+                  ->onDelete('cascade');
             $table->text('answer');
             $table->timestamps();
-
-            $table->foreign('survey_id')->references('id')->on('surveys')->onDelete('cascade');
         });
     }
 
@@ -24,4 +24,4 @@ class CreateResponsesTable extends Migration
     {
         Schema::dropIfExists('responses');
     }
-}
+};

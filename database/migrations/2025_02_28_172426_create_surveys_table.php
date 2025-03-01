@@ -1,22 +1,22 @@
 <?php
 
-// database/migrations/2025_02_28_000000_create_surveys_table.php
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateSurveysTable extends Migration
-{
+return new class extends Migration {
     public function up()
     {
         Schema::create('surveys', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('employee_id');
+            $table->foreignId('employee_id')
+                ->constrained('employees')
+                ->onDelete('cascade'); // Cascade delete to remove surveys if employee is deleted
             $table->date('survey_date');
             $table->timestamps();
 
-            // Add a foreign key constraint if using an employees table:
-            $table->foreign('employee_id')->references('id')->on('employees')->onDelete('cascade');
+            // Indexes for faster querying
+            $table->index('survey_date');
         });
     }
 
@@ -24,4 +24,4 @@ class CreateSurveysTable extends Migration
     {
         Schema::dropIfExists('surveys');
     }
-}
+};

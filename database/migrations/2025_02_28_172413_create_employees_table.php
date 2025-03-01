@@ -7,15 +7,18 @@ use Illuminate\Support\Facades\Schema;
 class CreateEmployeesTable extends Migration
 {
     public function up()
-    {
-        Schema::create('employees', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');         // Employee full name
-            $table->string('email')->unique();  // Unique email for login
-            $table->string('password');     // Password hash for authentication
-            $table->timestamps();
-        });
-    }
+{
+    Schema::create('employees', function (Blueprint $table) {
+        $table->id();
+        $table->string('name');
+        $table->string('email')->unique();
+        $table->timestamp('email_verified_at')->nullable();
+        $table->string('password');
+        $table->rememberToken();
+        $table->timestamps();
+    });
+}
+
 
     public function down()
     {

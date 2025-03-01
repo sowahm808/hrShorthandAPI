@@ -11,8 +11,19 @@ class Response extends Model
 
     protected $fillable = ['survey_id', 'question_id', 'answer'];
 
+    /**
+     * Get the survey that owns this response.
+     */
     public function survey()
     {
         return $this->belongsTo(Survey::class);
+    }
+
+    /**
+     * Get the question that this response answers.
+     */
+    public function question()
+    {
+        return $this->belongsTo(Question::class);
     }
 }
