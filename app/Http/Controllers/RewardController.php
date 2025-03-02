@@ -4,9 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Reward;
 use Illuminate\Http\Request;
+use App\Services\VoucherifyService;
 
 class RewardController extends Controller
 {
+
+    protected $voucherifyService;
+
     /**
      * Retrieve reward data for a specific employee.
      */
@@ -37,5 +41,22 @@ class RewardController extends Controller
         );
 
         return response()->json($reward);
+    }
+
+    public function __construct(VoucherifyService $voucherifyService)
+    {
+        $this->voucherifyService = $voucherifyService;
+    }
+
+    public function createVoucher(Request $request)
+    {
+        $data = $request->validate([
+            'code' => 'required|string',
+            // Other validation rules...
+        ]);
+
+        $voucher = $this->voucherifyService->createVoucher($data);
+
+        return response()->json(['voucher' => $voucher]);
     }
 }

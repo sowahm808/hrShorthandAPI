@@ -7,6 +7,7 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\SurveyController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\Auth\SocialAuthController;
+use App\Http\Controllers\PerksController;
 
 use Laravel\Sanctum\Http\Controllers\CsrfCookieController;
 
@@ -31,6 +32,8 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 // Protected routes (Require authentication)
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
+    
+    Route::get('/perks', [PerksController::class, 'index']);
 
     // Admin Routes (Restricted to Admins)
     Route::put('/questions/{id}', [QuestionController::class, 'update']);

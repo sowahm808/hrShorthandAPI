@@ -40,5 +40,15 @@ return [
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
-
+    
+    'tango' => [
+        'client_id' => env('TANGO_CLIENT_ID'),
+        'client_secret' => env('TANGO_CLIENT_SECRET'),
+        'api_url' => env('TANGO_API_URL'),
+    ],
+    'voucherify' => [
+        'app_id' => env('VOUCHERIFY_APP_ID'),
+        'secret_key' => env('VOUCHERIFY_SECRET_KEY'),
+        'api_url' => env('VOUCHERIFY_API_URL'),
+    ],
 ];

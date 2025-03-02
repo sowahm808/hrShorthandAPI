@@ -21,55 +21,59 @@ class SurveyController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $data = $request->validate([
-            'employee_id' => 'required|integer|exists:employees,id', // Ensure employee exists
-            'responses'   => 'required|array',
-            'survey_date' => 'required|date'
-        ]);
+{
+    $data = $request->validate([
+        'employee_id' => 'required|exists:employees,id',
+        'survey_date' => 'required|date_format:Y-m-d',
+        'responses' => 'required|array',
+        'responses.*.question_id' => 'required|exists:questions,id',
+        'responses.*.answer' => 'required|string'
+    ]);
 
-        // Fetch the employee to confirm it exists
-        $employee = Employee::find($data['employee_id']);
-        if (!$employee) {
-            return response()->json(['message' => 'Employee not found'], 404);
-        }
+    \Log::info('Survey Payload:', $request->json()->all()); // ✅ Debugging
 
-        // Create survey record
-        $survey = Survey::create([
-            'employee_id' => $employee->id,
-            'survey_date' => $data['survey_date']
-        ]);
-
-        // Save each response (ignore empty responses)
-        foreach ($data['responses'] as $questionId => $answer) {
-            if (!empty($answer)) { // Ignore empty responses
-                Response::create([
-                    'survey_id'   => $survey->id,
-                    'question_id' => $questionId,
-                    'answer'      => $answer,
-                ]);
-            }
-        }
-
-        // Trigger alerts if responses are below a threshold
-        if ($this->shouldAlert($data['responses'])) {
-            Notification::route('mail', 'manager@company.com')
-                ->notify(new NegativeResponseAlert($survey));
-        }
-
-        return response()->json(['message' => 'Survey submitted successfully'], 201);
+    // Fetch the employee to confirm existence
+    $employee = Employee::find($data['employee_id']);
+    if (!$employee) {
+        return response()->json(['message' => 'Employee not found'], 404);
     }
 
-    protected function shouldAlert(array $responses)
-    {
-        // Example: Trigger alert if any answer is below 3 (on a 1-5 scale)
-        foreach ($responses as $answer) {
-            if (is_numeric($answer) && $answer < 3) {
-                return true;
-            }
+    // Create survey record
+    $survey = Survey::create([
+        'employee_id' => $employee->id,
+        'survey_date' => $data['survey_date']
+    ]);
+
+    // Save each response correctly
+    foreach ($data['responses'] as $response) {
+        if (!empty($response['answer'])) { // ✅ Ignore empty responses
+            Response::create([
+                'survey_id'   => $survey->id,
+                'question_id' => $response['question_id'], // ✅ Correct access
+                'answer'      => $response['answer'],
+            ]);
         }
-        return false;
     }
+
+    // Trigger alerts if responses are below a threshold
+    if ($this->shouldAlert($data['responses'])) {
+        Notification::route('mail', 'manager@company.com')
+            ->notify(new NegativeResponseAlert($survey));
+    }
+
+    return response()->json(['message' => 'Survey submitted successfully'], 201);
+}
+
+protected function shouldAlert(array $responses)
+{
+    foreach ($responses as $response) {
+        if (isset($response['answer']) && is_numeric($response['answer']) && $response['answer'] < 3) {
+            return true; // ✅ Trigger alert if a numeric answer is below 3
+        }
+    }
+    return false;
+}
+
 
     public function dashboard()
     {
