@@ -16,6 +16,7 @@ class Employee extends Authenticatable
         'name',
         'email',
         'password',
+        'role'
     ];
 
     // Hide sensitive fields when serializing
@@ -53,5 +54,10 @@ class Employee extends Authenticatable
     public function auditLogs()
     {
         return $this->hasMany(AuditLog::class);
+    }
+
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
     }
 }

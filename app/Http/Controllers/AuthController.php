@@ -27,11 +27,22 @@ class AuthController extends Controller
         $token = $employee->createToken('api_token')->plainTextToken;
 
         return response()->json([
-            'employee' => $employee,
-            'token'    => $token,
+            //'employee' => $employee,
+            'employee' => [
+                'id'    => $employee->id,
+                'name'  => $employee->name,
+                'email' => $employee->email,
+                'role'  => $employee->role, // Include role in response
+            ],
+            'token' => $token,
+            'redirect_to' => $employee->isAdmin() ? '/admin-dashboard' : '/dashboard'
+
         ]);
     }
-
+    if (Auth::user()->role !== 'admin') {
+        return response()->json(['message' => 'Unauthorized'], 403);
+    }
+    
     return response()->json(['message' => 'Invalid credentials'], 401);
 }
 
@@ -73,13 +84,20 @@ public function register(Request $request)
         'name'     => $validatedData['name'],
         'email'    => $validatedData['email'],
         'password' => Hash::make($validatedData['password']),
+        'role'     => 'user' // Default role assigned
     ]);
 
     // Auto-login after registration
     $token = $employee->createToken('api_token')->plainTextToken;
 
     return response()->json([
-        'employee' => $employee,
+        //'employee' => $employee,
+        'employee' => [
+            'id'    => $employee->id,
+            'name'  => $employee->name,
+            'email' => $employee->email,
+            'role'  => $employee->role, // Include role
+        ],
         'token'    => $token
     ], 201);
 }

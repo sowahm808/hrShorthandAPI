@@ -2,48 +2,57 @@
 
 namespace App\Http\Controllers\Auth;
 
+use Laravel\Socialite\Facades\Socialite;
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use Illuminate\Http\Request;
-use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Auth;
 
 class SocialAuthController extends Controller
 {
-    // Redirect to Google for authentication
+    /**
+     * Redirect to Google OAuth.
+     */
     public function redirectToGoogle()
     {
-        return Socialite::driver('google')->redirect();
+        return Socialite::driver('google')->stateless()->redirect();
     }
 
-    // Handle Google callback
-    public function handleGoogleCallback()
-    {
-        try {
-            $googleUser = Socialite::driver('google')->user();
+    /**
+     * Handle Google OAuth callback.
+     */
+    public function handleGoogleCallback(Request $request)
+{
+    try {
+        // Get Google user data
+        $googleUser = Socialite::driver('google')->stateless()->user();
 
-            // Check if the user exists in the database
-            $employee = Employee::where('email', $googleUser->getEmail())->first();
+        // Find or create employee
+        $employee = Employee::firstOrCreate(
+            ['email' => $googleUser->getEmail()],
+            [
+                'name' => $googleUser->getName(),
+                'password' => bcrypt(uniqid()), // Generate random password
+                'role' => 'user' // Default role if not set
+            ]
+        );
 
-            if (!$employee) {
-                // Register new user
-                $employee = Employee::create([
-                    'name'  => $googleUser->getName(),
-                    'email' => $googleUser->getEmail(),
-                    'password' => bcrypt(uniqid()), // Generate a random password
-                ]);
-            }
+        // Generate API token
+        $token = $employee->createToken('api_token')->plainTextToken;
 
-            // Generate an API token using Sanctum
-            $token = $employee->createToken('google-auth-token')->plainTextToken;
+        // Ensure role is included and encoded properly
+        $role = urlencode($employee->role);
 
-            return response()->json([
-                'employee' => $employee,
-                'token' => $token,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Login failed', 'error' => $e->getMessage()], 500);
-        }
+        // Debug: Check if role is being retrieved correctly
+        \Log::info("User Role: " . $role); // Add this to check logs
+
+
+        // Redirect to Angular Google Callback Page
+        return redirect()->away("http://localhost:4200/auth/google/callback?token=$token&email=" . urlencode($employee->email) . "&role=" . $role);
+
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Failed to authenticate.'], 500);
     }
 }
 
+}

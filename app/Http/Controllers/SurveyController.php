@@ -15,19 +15,7 @@ class SurveyController extends Controller
 {
     public function index()
     {
-        // Return static questions for simplicity.
-        // $questions = [
-        //     "How aware are you of the company vision?",
-        //     "Do you view your skills as an asset to the company?",
-        //     "How clear are your job expectations?",
-        //     "How would you rate coworker support and collaboration?",
-        //     "Are necessary resources available for your tasks?",
-        //     "Overall job satisfaction and would you recommend this job?",
-        //     "Do you see long-term commitment here? Suggestions for improvement?"
-        // ];
-
-        // $questions = Question::orderBy('order')->get();
-        $questions = Question::orderBy('order')->pluck('text'); // Returns only text values
+        $questions = Question::select('id', 'text', 'type', 'is_required', 'order')->get();
 
         return response()->json($questions);
     }
