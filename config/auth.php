@@ -62,7 +62,11 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', App\Models\User::class),
+            // Use the Employee model by default for authentication
+            // so that new installations work without requiring an
+            // ENV override.  The model can still be swapped by
+            // setting the AUTH_MODEL environment variable.
+            'model' => env('AUTH_MODEL', App\Models\Employee::class),
         ],
 
         // 'users' => [
