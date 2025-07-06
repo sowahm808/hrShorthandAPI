@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash; // <-- Added this line
 use App\Models\Employee;
 
 class AuthController extends Controller
@@ -83,7 +82,10 @@ public function register(Request $request)
     $employee = Employee::create([
         'name'     => $validatedData['name'],
         'email'    => $validatedData['email'],
-        'password' => Hash::make($validatedData['password']),
+        // The Employee model automatically hashes the password
+        // using the setPasswordAttribute mutator, so we can assign
+        // the plain text value here.
+        'password' => $validatedData['password'],
         'role'     => 'user' // Default role assigned
     ]);
 
